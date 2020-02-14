@@ -11,7 +11,7 @@
 #include <Wire.h>
 #include <Adafruit_BME280.h>
 #include <OneWire.h>
-#include <DalasTemperature.h>
+#include <DallasTemperature.h>
 
 //Setup global objects
 WiFiClient espClient;
@@ -33,7 +33,54 @@ DallasTemperature DS18B20(&oneWire);
 #include "secrets.h"
 
 // Perform device setup
+void callback(char* topic, byte* payload, unsigned int length){
+  //Handle incoming messages
+}
 
+void reconnect(){
+  // Connected to mqtt_server
+  // Subscribe to relay control topics
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Create a random client ID
+    // Attempt to connect
+    if (client.connect(UNIQUE_ID, mqtt_user, mqtt_pass)) {
+      Serial.println("connected");
+      // ... and resubscribe
+      client.subscribe("jagro/JAGRO1/relay1");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
+float readSoilHum(){
+  return 0;
+}
+void readSensors(){
+  //Send sensor data
+  airTemp = bme.readTemperature();
+  airHum = bme.readHumidity();
+  DS18B20.requestTemperatures();
+  soilTemp = DS18B20.getTempCByIndex(0);
+  soilHum = readSoilHum();
+}
+
+void publish(){
+  char buff[5];
+  dtostrf(airTemp,5,2,buff);
+  client.publish("jagro/JAGRO1/sensor1",buff);
+  dtostrf(airHum,5,2,buff);
+  client.publish("jagro/JAGRO1/sensor2",buff);
+  dtostrf(soilTemp,5,2,buff);
+  client.publish("jagro/JAGRO1/sensor3",buff);
+  dtostrf(soilHum,5,2,buff);
+  client.publish("jagro/JAGRO1/sensor4",buff);
+}
 void setup() {
   // start serial ouput for debugging
   Serial.begin(9600);
@@ -76,4 +123,11 @@ void setup() {
 
 
 void loop() {
+  if(!client.connected()){
+    reconnect();
+  }
+  client.loop();
+  if((millis() - last_publish) > PUBLISH_RATE){
+    publish();
+  }
 }
