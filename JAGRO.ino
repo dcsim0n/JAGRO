@@ -32,9 +32,34 @@ DallasTemperature DS18B20(&oneWire);
 //const char* mqtt_pass 
 #include "secrets.h"
 
-// Perform device setup
+void toggleRelay(int relay, int state){
+  digitalWrite(relay, state);
+  relayStatus1 = state;
+}
 void callback(char* topic, byte* payload, unsigned int length){
   //Handle incoming messages
+  Serial.print("Recieved Message: ");
+  
+  Serial.println(topic);
+  Serial.println(payload[0]);
+  
+  if(strcmp(topic,"jagro/JAGRO1/relay1") == 0){
+    char cmd = payload[0];
+    Serial.println(cmd);
+    switch (cmd)
+    {
+    case '1':
+      Serial.println("Turning relay 1 off");
+      toggleRelay(RELAY_PIN_1,HIGH);
+      break;
+    case '0':
+      Serial.println("Turning relay 1 on!");
+      toggleRelay(RELAY_PIN_1,LOW);
+      break;
+    default:
+      break;
+    }
+  }
 }
 
 void reconnect(){
@@ -94,6 +119,11 @@ void setup() {
   pinMode(RELAY_PIN_2,OUTPUT);
   pinMode(RELAY_PIN_3,OUTPUT);
   pinMode(RELAY_PIN_4,OUTPUT);
+
+  digitalWrite(RELAY_PIN_1,1);
+  digitalWrite(RELAY_PIN_2,1);
+  digitalWrite(RELAY_PIN_3,1);
+  digitalWrite(RELAY_PIN_4,1);
   // setup wifi connection
   // We start by connecting to a WiFi network
   Serial.print("Connecting to: ");
