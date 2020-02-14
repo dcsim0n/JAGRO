@@ -65,6 +65,11 @@ void readSensors(){
   //Send sensor data
   airTemp = bme.readTemperature();
   airHum = bme.readHumidity();
+  Serial.print("Temp: ");
+  Serial.println(airTemp);
+  Serial.print("Hum: ");
+  Serial.println(airHum);
+
   DS18B20.requestTemperatures();
   soilTemp = DS18B20.getTempCByIndex(0);
   soilHum = readSoilHum();
@@ -128,6 +133,8 @@ void loop() {
   }
   client.loop();
   if((millis() - last_publish) > PUBLISH_RATE){
+    readSensors();
     publish();
+    last_publish = millis();
   }
 }

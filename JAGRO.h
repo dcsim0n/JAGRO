@@ -5,9 +5,7 @@
 *
 */
 
-const char UNIQUE_ID[] = "JAGRO1";
 #define PUBLISH_RATE 5000
-#define MQTT_PORT 1833
 #define SOIL_HUM_PIN A0
 #define SOIL_HUM_VCC D8
 
