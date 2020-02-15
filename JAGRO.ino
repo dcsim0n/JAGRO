@@ -43,7 +43,7 @@ void callback(char* topic, byte* payload, unsigned int length){
   Serial.println(topic);
   Serial.println(payload[0]);
   
-  if(strcmp(topic,"jagro/JAGRO1/relay1") == 0){
+  if(strcmp(topic,"jagro/JAGRO1/relay/1") == 0){
     char cmd = payload[0];
     Serial.println(cmd);
     switch (cmd)
@@ -72,7 +72,7 @@ void reconnect(){
     if (client.connect(UNIQUE_ID, mqtt_user, mqtt_pass)) {
       Serial.println("connected");
       // ... and resubscribe
-      client.subscribe("jagro/JAGRO1/relay1");
+      client.subscribe("jagro/JAGRO1/relay/1");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -103,13 +103,13 @@ void readSensors(){
 void publish(){
   char buff[5];
   dtostrf(airTemp,5,2,buff);
-  client.publish("jagro/JAGRO1/sensor1",buff);
+  client.publish("jagro/JAGRO1/sensor/1",buff);
   dtostrf(airHum,5,2,buff);
-  client.publish("jagro/JAGRO1/sensor2",buff);
+  client.publish("jagro/JAGRO1/sensor/2",buff);
   dtostrf(soilTemp,5,2,buff);
-  client.publish("jagro/JAGRO1/sensor3",buff);
+  client.publish("jagro/JAGRO1/sensor/3",buff);
   dtostrf(soilHum,5,2,buff);
-  client.publish("jagro/JAGRO1/sensor4",buff);
+  client.publish("jagro/JAGRO1/sensor/4",buff);
 }
 void setup() {
   // start serial ouput for debugging
