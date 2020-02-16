@@ -33,8 +33,16 @@ DallasTemperature DS18B20(&oneWire);
 #include "secrets.h"
 
 void toggleRelay(int relay, int state){
-  digitalWrite(relay, state);
-  relayStatus1 = state;
+  // RELAY_PINS is 2D array
+  // Hardware pin is at [idx][0]
+  // Pin state is at [idx][1]
+  digitalWrite(RELAY_PINS[relay][0], state);
+  RELAY_PINS[relay][1] = state;
+  char topic[50]; 
+  sprintf(topic,"jagro/JAGRO1/relay/%d/status",relay + 1);
+  char msg[2]= "";
+  sprintf(msg,"%d",state);
+  client.publish(topic,msg);
 }
 void callback(char* topic, byte* payload, unsigned int length){
   //Handle incoming messages
@@ -50,11 +58,11 @@ void callback(char* topic, byte* payload, unsigned int length){
     {
     case '1':
       Serial.println("Turning relay 1 off");
-      toggleRelay(RELAY_PIN_1,HIGH);
+      toggleRelay(0,HIGH);
       break;
     case '0':
       Serial.println("Turning relay 1 on!");
-      toggleRelay(RELAY_PIN_1,LOW);
+      toggleRelay(0,LOW);
       break;
     default:
       break;
