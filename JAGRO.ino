@@ -21,6 +21,7 @@ OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature DS18B20(&oneWire);
 // mq_tt topics for input output
 
+const char UNIQUE_ID[]="JAGRO2";
 
 // * MUST HAVE A SECRET.H FILE WITH THE FOLLOWING DEFINES * //
 //const char auth[] 
@@ -39,10 +40,26 @@ void toggleRelay(int relay, int state){
   digitalWrite(RELAY_PINS[relay][0], state);
   RELAY_PINS[relay][1] = state;
   char topic[50]; 
-  sprintf(topic,"jagro/JAGRO1/relay/%d/status",relay + 1);
+  sprintf(topic,"jagro/JAGRO2/relay/%d/status",relay + 1);
   char msg[2]= "";
   sprintf(msg,"%d",state);
   client.publish(topic,msg);
+}
+
+void handleRelayCmd(int relay, char cmd){
+  switch (cmd)
+  {
+    case '1':
+      Serial.println("Turning relay 1 off");
+      toggleRelay(relay,HIGH);
+      break;
+    case '0':
+      Serial.println("Turning relay 1 on!");
+      toggleRelay(relay,LOW);
+      break;
+    default:
+      break;
+  }
 }
 void callback(char* topic, byte* payload, unsigned int length){
   //Handle incoming messages
@@ -51,22 +68,20 @@ void callback(char* topic, byte* payload, unsigned int length){
   Serial.println(topic);
   Serial.println(payload[0]);
   
-  if(strcmp(topic,"jagro/JAGRO1/relay/1") == 0){
-    char cmd = payload[0];
-    Serial.println(cmd);
-    switch (cmd)
-    {
-    case '1':
-      Serial.println("Turning relay 1 off");
-      toggleRelay(0,HIGH);
-      break;
-    case '0':
-      Serial.println("Turning relay 1 on!");
-      toggleRelay(0,LOW);
-      break;
-    default:
-      break;
-    }
+  char cmd = payload[0];
+  Serial.println(cmd);
+  
+  if(strcmp(topic,"jagro/JAGRO2/relay/1") == 0){
+    handleRelayCmd(0,cmd);
+  }
+  if(strcmp(topic,"jagro/JAGRO2/relay/2") == 0){
+    handleRelayCmd(1,cmd);
+  }
+  if(strcmp(topic,"jagro/JAGRO2/relay/3") == 0){
+    handleRelayCmd(2,cmd);
+  }
+  if(strcmp(topic,"jagro/JAGRO2/relay/4") == 0){
+    handleRelayCmd(3,cmd);
   }
 }
 
@@ -80,7 +95,7 @@ void reconnect(){
     if (client.connect(UNIQUE_ID, mqtt_user, mqtt_pass)) {
       Serial.println("connected");
       // ... and resubscribe
-      client.subscribe("jagro/JAGRO1/relay/1");
+      client.subscribe("jagro/JAGRO2/relay/+"); //Subscribe to all relay commands
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -92,7 +107,15 @@ void reconnect(){
 }
 
 float readSoilHum(){
-  return 0;
+  int sampleTotal;
+  // read 5 samples and apply smoothing
+  for(int i = 0; i<6; i++){
+    int sample = analogRead(SOIL_HUM_PIN);
+    sampleTotal += sample;
+    delay(100);
+  }
+  int sampleAvg = sampleTotal / 5;
+  soilHum = map(sampleAvg, 1024, 0, 0, 100);
 }
 void readSensors(){
   //Send sensor data
@@ -111,13 +134,13 @@ void readSensors(){
 void publish(){
   char buff[5];
   dtostrf(airTemp,5,2,buff);
-  client.publish("jagro/JAGRO1/sensor/1",buff);
+  client.publish("jagro/JAGRO2/sensor/1",buff);
   dtostrf(airHum,5,2,buff);
-  client.publish("jagro/JAGRO1/sensor/2",buff);
+  client.publish("jagro/JAGRO2/sensor/2",buff);
   dtostrf(soilTemp,5,2,buff);
-  client.publish("jagro/JAGRO1/sensor/3",buff);
+  client.publish("jagro/JAGRO2/sensor/3",buff);
   dtostrf(soilHum,5,2,buff);
-  client.publish("jagro/JAGRO1/sensor/4",buff);
+  client.publish("jagro/JAGRO2/sensor/4",buff);
 }
 void setup() {
   // start serial ouput for debugging

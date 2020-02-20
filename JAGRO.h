@@ -31,7 +31,4 @@ float soilTemp = 0;
 float soilHum = 0;
 long last_publish = 0;
 
-int relayStatus1 = 1; // 1 = HIGH, 0 = LOW. HIGH = OFF, LOW = ON
-int relayStauts2 = 1;
-int relayStatus3 = 1;
-int relayStatus4 = 1;
+bool SAMPLING = false;
