@@ -12,6 +12,7 @@
 #include <Adafruit_BME280.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <Bounce2.h>
 
 //Setup global objects
 WiFiClient espClient;
@@ -19,7 +20,10 @@ PubSubClient client(espClient);
 Adafruit_BME280 bme;
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature DS18B20(&oneWire);
-// mq_tt topics for input output
+Bounce waterBtn = Bounce();
+Bounce lightBtn = Bounce();
+
+
 
 const char UNIQUE_ID[]="JAGRO2";
 
@@ -90,7 +94,6 @@ void reconnect(){
   // Subscribe to relay control topics
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
-    // Create a random client ID
     // Attempt to connect
     if (client.connect(UNIQUE_ID, mqtt_user, mqtt_pass)) {
       Serial.println("connected");
@@ -107,15 +110,21 @@ void reconnect(){
 }
 
 float readSoilHum(){
-  int sampleTotal;
+  float sampleTotal;
   // read 5 samples and apply smoothing
-  for(int i = 0; i<6; i++){
-    int sample = analogRead(SOIL_HUM_PIN);
-    sampleTotal += sample;
+  for(int i = 0; i<5; i++){
+    float sample = analogRead(SOIL_HUM_PIN);
+    sampleTotal = sampleTotal + sample;
     delay(100);
   }
-  int sampleAvg = sampleTotal / 5;
-  soilHum = map(sampleAvg, 1024, 0, 0, 100);
+  float sampleAvg = sampleTotal / 5;
+  // as RH% / moisture decreases, sample value will increase
+  // reverse this by taking differnce of full scale ( 1024 @ 10 bits )
+  sampleAvg = (1025 - sampleAvg ); 
+  // map 10 bit number into percentage of 0-100%
+  float rh = map(sampleAvg, 0, 1025, 0, 100);
+  return rh;
+  
 }
 void readSensors(){
   //Send sensor data
@@ -129,6 +138,8 @@ void readSensors(){
   DS18B20.requestTemperatures();
   soilTemp = DS18B20.getTempCByIndex(0);
   soilHum = readSoilHum();
+  Serial.print("Soil: ");
+  Serial.println(soilHum); 
 }
 
 void publish(){
@@ -155,7 +166,18 @@ void setup() {
   digitalWrite(RELAY_PIN_2,1);
   digitalWrite(RELAY_PIN_3,1);
   digitalWrite(RELAY_PIN_4,1);
-  // setup wifi connection
+
+  // pinMode(WATER_BTN, INPUT);
+  // pinMode(LIGHT_BTN, INPUT);
+  
+  // digitalWrite(WATER_BTN, 1); 
+  // digitalWrite(LIGHT_BTN, 1); 
+
+  // waterBtn.attach(WATER_BTN);
+  // waterBtn.interval(100);
+  // lightBtn.attach(LIGHT_BTN);
+  // lightBtn.interval(100);
+  // // setup wifi connection
   // We start by connecting to a WiFi network
   Serial.print("Connecting to: ");
   Serial.println(wifi_ssid);
@@ -183,10 +205,28 @@ void setup() {
   Serial.println(mqtt_server);
   client.setServer(mqtt_server, MQTT_PORT);
   client.setCallback(callback);
-
-  randomSeed(micros());
 }
 
+void readButtons(){
+  lightBtn.update();
+  waterBtn.update();
+
+  if(lightBtn.fell()){// if relay 0 is off
+    if(RELAY_PINS[0][1] == 1){
+      toggleRelay(0,0);
+    }else{
+      toggleRelay(0,1);
+    }
+  }
+  
+  if(waterBtn.fell()){// if relay 0 is off{
+    if(RELAY_PINS[1][1] == 1){
+      toggleRelay(1,0);
+    }else{
+      toggleRelay(1,1);
+    }
+  }
+}
 
 void loop() {
   if(!client.connected()){
@@ -198,4 +238,5 @@ void loop() {
     publish();
     last_publish = millis();
   }
+  // readButtons();
 }
