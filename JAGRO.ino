@@ -38,6 +38,8 @@ const char UNIQUE_ID[]="JAGRO2";
 #include "secrets.h"
 
 void toggleRelay(int relay, int state){
+  Serial.print("Toggling relay: ");
+  Serial.println(relay);
   // RELAY_PINS is 2D array
   // Hardware pin is at [idx][0]
   // Pin state is at [idx][1]
@@ -167,14 +169,14 @@ void setup() {
   digitalWrite(RELAY_PIN_3,1);
   digitalWrite(RELAY_PIN_4,1);
 
-  // pinMode(WATER_BTN, INPUT);
+  pinMode(WATER_BTN, INPUT);
   // pinMode(LIGHT_BTN, INPUT);
   
   // digitalWrite(WATER_BTN, 1); 
   // digitalWrite(LIGHT_BTN, 1); 
 
-  // waterBtn.attach(WATER_BTN);
-  // waterBtn.interval(100);
+  waterBtn.attach(WATER_BTN);
+  waterBtn.interval(5);
   // lightBtn.attach(LIGHT_BTN);
   // lightBtn.interval(100);
   // // setup wifi connection
@@ -238,5 +240,5 @@ void loop() {
     publish();
     last_publish = millis();
   }
-  // readButtons();
+  readButtons();
 }
