@@ -170,15 +170,15 @@ void setup() {
   digitalWrite(RELAY_PIN_4,1);
 
   pinMode(WATER_BTN, INPUT);
-  // pinMode(LIGHT_BTN, INPUT);
+  pinMode(LIGHT_BTN, INPUT); // is this the source of bugs?
   
-  // digitalWrite(WATER_BTN, 1); 
-  // digitalWrite(LIGHT_BTN, 1); 
+  digitalWrite(WATER_BTN, 1); 
+  digitalWrite(LIGHT_BTN, 1); 
 
   waterBtn.attach(WATER_BTN);
   waterBtn.interval(5);
-  // lightBtn.attach(LIGHT_BTN);
-  // lightBtn.interval(100);
+  lightBtn.attach(LIGHT_BTN);
+  lightBtn.interval(5);
   // // setup wifi connection
   // We start by connecting to a WiFi network
   Serial.print("Connecting to: ");

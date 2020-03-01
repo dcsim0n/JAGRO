@@ -6,7 +6,7 @@
 */
 
 #define WATER_BTN D9
-#define LIGHT_BTN D10
+#define LIGHT_BTN D3
 
 #define PUBLISH_RATE 5000
 #define SOIL_HUM_PIN A0
