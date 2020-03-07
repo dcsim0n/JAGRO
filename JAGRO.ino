@@ -25,7 +25,7 @@ Bounce lightBtn = Bounce();
 
 
 
-const char UNIQUE_ID[]="JAGRO2";
+const char UNIQUE_ID[]="JAGRO1";
 
 // * MUST HAVE A SECRET.H FILE WITH THE FOLLOWING DEFINES * //
 //const char auth[] 
@@ -46,7 +46,7 @@ void toggleRelay(int relay, int state){
   digitalWrite(RELAY_PINS[relay][0], state);
   RELAY_PINS[relay][1] = state;
   char topic[50]; 
-  sprintf(topic,"jagro/JAGRO2/relay/%d/status",relay + 1);
+  sprintf(topic,"jagro/JAGRO1/relay/%d/status",relay + 1);
   char msg[2]= "";
   sprintf(msg,"%d",state);
   client.publish(topic,msg);
@@ -77,16 +77,16 @@ void callback(char* topic, byte* payload, unsigned int length){
   char cmd = payload[0];
   Serial.println(cmd);
   
-  if(strcmp(topic,"jagro/JAGRO2/relay/1") == 0){
+  if(strcmp(topic,"jagro/JAGRO1/relay/1") == 0){
     handleRelayCmd(0,cmd);
   }
-  if(strcmp(topic,"jagro/JAGRO2/relay/2") == 0){
+  if(strcmp(topic,"jagro/JAGRO1/relay/2") == 0){
     handleRelayCmd(1,cmd);
   }
-  if(strcmp(topic,"jagro/JAGRO2/relay/3") == 0){
+  if(strcmp(topic,"jagro/JAGRO1/relay/3") == 0){
     handleRelayCmd(2,cmd);
   }
-  if(strcmp(topic,"jagro/JAGRO2/relay/4") == 0){
+  if(strcmp(topic,"jagro/JAGRO1/relay/4") == 0){
     handleRelayCmd(3,cmd);
   }
 }
@@ -100,7 +100,7 @@ void reconnect(){
     if (client.connect(UNIQUE_ID, mqtt_user, mqtt_pass)) {
       Serial.println("connected");
       // ... and resubscribe
-      client.subscribe("jagro/JAGRO2/relay/+"); //Subscribe to all relay commands
+      client.subscribe("jagro/JAGRO1/relay/+"); //Subscribe to all relay commands
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -128,8 +128,10 @@ float readSoilHum(){
   return rh;
   
 }
+
 void readSensors(){
-  //Send sensor data
+  //Just read sensor data into global state
+  //Sending data will happen in publish()
   airTemp = bme.readTemperature();
   airHum = bme.readHumidity();
   Serial.print("Temp: ");
@@ -144,17 +146,39 @@ void readSensors(){
   Serial.println(soilHum); 
 }
 
+void readButtons(){
+  lightBtn.update();
+  waterBtn.update();
+
+  if(lightBtn.fell()){// if relay 0 is off
+    if(RELAY_PINS[0][1] == 1){
+      toggleRelay(0,0);
+    }else{
+      toggleRelay(0,1);
+    }
+  }
+  
+  if(waterBtn.fell()){// if relay 0 is off{
+    if(RELAY_PINS[1][1] == 1){
+      toggleRelay(1,0);
+    }else{
+      toggleRelay(1,1);
+    }
+  }
+}
+
 void publish(){
   char buff[5];
   dtostrf(airTemp,5,2,buff);
-  client.publish("jagro/JAGRO2/sensor/1",buff);
+  client.publish("jagro/JAGRO1/sensor/1",buff);
   dtostrf(airHum,5,2,buff);
-  client.publish("jagro/JAGRO2/sensor/2",buff);
+  client.publish("jagro/JAGRO1/sensor/2",buff);
   dtostrf(soilTemp,5,2,buff);
-  client.publish("jagro/JAGRO2/sensor/3",buff);
+  client.publish("jagro/JAGRO1/sensor/3",buff);
   dtostrf(soilHum,5,2,buff);
-  client.publish("jagro/JAGRO2/sensor/4",buff);
+  client.publish("jagro/JAGRO1/sensor/4",buff);
 }
+
 void setup() {
   // start serial ouput for debugging
   Serial.begin(9600);
@@ -191,7 +215,6 @@ void setup() {
     Serial.print(".");
   }
 
-
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
@@ -207,27 +230,6 @@ void setup() {
   Serial.println(mqtt_server);
   client.setServer(mqtt_server, MQTT_PORT);
   client.setCallback(callback);
-}
-
-void readButtons(){
-  lightBtn.update();
-  waterBtn.update();
-
-  if(lightBtn.fell()){// if relay 0 is off
-    if(RELAY_PINS[0][1] == 1){
-      toggleRelay(0,0);
-    }else{
-      toggleRelay(0,1);
-    }
-  }
-  
-  if(waterBtn.fell()){// if relay 0 is off{
-    if(RELAY_PINS[1][1] == 1){
-      toggleRelay(1,0);
-    }else{
-      toggleRelay(1,1);
-    }
-  }
 }
 
 void loop() {
