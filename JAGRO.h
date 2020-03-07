@@ -34,4 +34,5 @@ float soilTemp = 0;
 float soilHum = 0;
 long last_publish = 0;
 
+bool NEED_SYNC = true;
 bool SAMPLING = false;
