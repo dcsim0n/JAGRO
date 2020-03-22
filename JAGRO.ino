@@ -22,12 +22,13 @@ OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature DS18B20(&oneWire);
 Bounce waterBtn = Bounce();
 Bounce lightBtn = Bounce();
+Bounce emergencyStop = Bounce();
 
 
 
 const char UNIQUE_ID[]="JAGRO2";
 
-// * MUST HAVE A SECRET.H FILE WITH THE FOLLOWING DEFINES * //
+// * MUST HAVE A secret.h FILE WITH THE FOLLOWING DEFINES * //
 //const char auth[] 
 //const char ssid[]  
 //const char pass[]  
@@ -150,6 +151,7 @@ void readSensors(){
 void readButtons(){
   lightBtn.update();
   waterBtn.update();
+  emergencyStop.update();
 
   if(lightBtn.fell()){// if relay 0 is off
     if(RELAY_PINS[0][1] == 1){
@@ -165,6 +167,16 @@ void readButtons(){
     }else{
       toggleRelay(1,1);
     }
+  }
+
+  // Handle emergency stop condition
+  if(emergencyStop.rose()){ 
+    for(int i = 0; i < NUM_OF_RELAYS; i++){
+      // TURN OFF ALL RELAYS!!
+      toggleRelay(i,1);
+    }
+    client.publish("jagro/JAGRO2/estop","0");
+    STOP_ALL = true;
   }
 }
 
@@ -204,10 +216,12 @@ void setup() {
   digitalWrite(RELAY_PIN_4,1);
 
   pinMode(WATER_BTN, INPUT);
-  pinMode(LIGHT_BTN, INPUT); // is this the source of bugs?
+  pinMode(LIGHT_BTN, INPUT); 
+  pinMode(E_STOP, INPUT); //Used as E-STOP input
   
   digitalWrite(WATER_BTN, 1); 
   digitalWrite(LIGHT_BTN, 1); 
+  digitalWrite(E_STOP, 0); //Pulldown E-STOP input
 
   waterBtn.attach(WATER_BTN);
   waterBtn.interval(5);
@@ -243,6 +257,9 @@ void setup() {
 }
 
 void loop() {
+  if(STOP_ALL){ // If something triggered an e-stop condition, stop all processing
+    return;
+  }
   if(!client.connected()){
     reconnect();
   }
