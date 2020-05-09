@@ -7,17 +7,19 @@
 
 #define WATER_BTN D9
 #define LIGHT_BTN D3
+#define E_STOP D4 //E Stop
 
 #define PUBLISH_RATE 5000
 #define SOIL_HUM_PIN A0
 // #define SOIL_HUM_VCC D8
 
-#define ONE_WIRE_BUS 14
+#define ONE_WIRE_BUS 14 //D5? 
 #define SDA_PIN D1
 #define SCL_PIN D2
 #define BME_ADDR 0x76
 #define LCD_ADR 0x32
 
+#define NUM_OF_RELAYS 4
 #define RELAY_PIN_1 D0
 #define RELAY_PIN_2 D6
 #define RELAY_PIN_3 D7
@@ -34,5 +36,6 @@ float soilTemp = 0;
 float soilHum = 0;
 long last_publish = 0;
 
+bool STOP_ALL = false;
 bool NEED_SYNC = true;
 bool SAMPLING = false;
