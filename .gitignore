@@ -2,3 +2,5 @@ secrets.h
 .vscode
 *.bin
 *.elf
+*.swp
+*.vim
